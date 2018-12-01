@@ -37,12 +37,17 @@ namespace OOPGame
         }
 
         // Переопределяем движение объекта
-        // Перевод объекта в следующее состояние и положение
-        //public override void Update()
-        //{
-        //    Pos.X += Dir.X;
-        //    if (Pos.X < 0) Pos.X = Game.Width - Size.Width;
-        //}
+        /// <summary>
+        /// Перевод объекта в следующее состояние и положение
+        /// </summary>
+        public override void Update()
+        {
+            Pos.X = Pos.X + Dir.X;
+            Pos.Y = Pos.Y + Dir.Y;
+            if (Pos.X < 0) Dir.X = -Dir.X;
+            if (Pos.X > Game.Width) Dir.X = -Dir.X;
+            if (Pos.Y < 0) Dir.Y = -Dir.Y;
+            if (Pos.Y > Game.Height) Dir.Y = -Dir.Y;
+        }
     }
-
 }

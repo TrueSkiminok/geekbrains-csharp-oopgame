@@ -20,10 +20,18 @@ namespace OOPGame
         private static BufferedGraphicsContext _context;
         public static BufferedGraphics Buffer;
         public static BaseObject[] _objs;
+        private static Bullet _bullet;
+        private static Asteroid[] _asteroids;
 
         // Свойства
         // Ширина и высота игрового поля
+        /// <summary>
+        /// Ширинаигрового поля
+        /// </summary>
         public static int Width { get; set; }
+        /// <summary>
+        /// Высота игрового поля
+        /// </summary>
         public static int Height { get; set; }
 
         /// <summary>
@@ -65,22 +73,46 @@ namespace OOPGame
         /// </summary>
         public static void Load()
         {
-            //Мы решили создать 30 объектов на экране
+
+
             _objs = new BaseObject[30];
+            _bullet = new Bullet(new Point(0, 200), new Point(5, 0), new Size(4, 1));
+            _asteroids = new Asteroid[3];
+            var rnd = new Random();
+            for (var i = 0; i < _objs.Length; i++)
+            {
+                int r = rnd.Next(5, 50);
+                _objs[i] = new Star(new Point(1000, rnd.Next(0, Game.Height)), new Point(-r, r), new Size(3, 3));
+            }
+            for (var i = 0; i < _asteroids.Length; i++)
+            {
+                int r = rnd.Next(5, 50);
+                _asteroids[i] = new Asteroid(new Point(1000, rnd.Next(0, Game.Height)), new Point(-r / 5, r), new Size(r, r));
+            }
 
-            // Кометы - одна пятая всех объектов
-            for (int i = 0; i < _objs.Length / 5; i++)
-                _objs[i] = new ImageObject(new Point(600, i * 60), new Point(-i - 1, i + 1),
-                                           new Size(30, 30), Image.FromFile(@"img\comet.png"));
 
-            // Обычные звезды - две пятых всех объектов
-            for (int i = _objs.Length / 5; i < _objs.Length / 5 * 3; i++)
-                _objs[i] = new Star(new Point(400, i * 55 - 540), new Point(-i, 0), new Size(5, 5));
+            ////Мы решили создать 30 объектов на экране
+            //_objs = new BaseObject[30];
+            //Random rnd = new Random();
 
-            // Насыщенные голубые звезды  - две пятых всех объектов
-            for (int i = _objs.Length / 5 * 3; i < _objs.Length; i++)
-                _objs[i] = new ThickStar(new Point(200, i * 50 - 970), new Point(-i, 0),
-                                         new Size(7, 7), Pens.Aquamarine);
+            //// Кометы - одна пятая всех объектов
+            //for (int i = 0; i < _objs.Length / 5; i++)
+            //    _objs[i] = new ImageObject(new Point(600, i * 60), new Point(-i - 1, i + 1),
+            //                               new Size(30, 30), Image.FromFile(@"img\comet.png"));
+
+            //// Обычные звезды - одна пятая всех объектов
+            //for (int i = _objs.Length / 5; i < _objs.Length / 5 * 2; i++)
+            //    _objs[i] = new Star(new Point(400, i * 90 - 550), new Point(-i, 0), new Size(5, 5));
+
+            //// Круглые звезды - одна пятая всех объектов
+            //for (int i = _objs.Length / 5 * 2; i < _objs.Length / 5 * 3; i++)
+            //    _objs[i] = new StationaryCircle(new Point(rnd.Next(0, Width), rnd.Next(0, Height)),
+            //                                    new Point(-i, 0), new Size(13, 13), Brushes.Yellow);
+
+            //// Насыщенные голубые звезды  - две пятых всех объектов
+            //for (int i = _objs.Length / 5 * 3; i < _objs.Length; i++)
+            //    _objs[i] = new ThickStar(new Point(200, i * 50 - 970), new Point(-i, 0),
+            //                             new Size(9, 9), Pens.Aquamarine);
         }
 
         /// <summary>
@@ -89,8 +121,13 @@ namespace OOPGame
         public static void Draw()
         {
             Buffer.Graphics.Clear(Color.Black);
+
             foreach (BaseObject obj in _objs)
                 obj.Draw();
+            foreach (Asteroid obj in _asteroids)
+                obj.Draw();
+            _bullet.Draw();
+
             Buffer.Render();
         }
 
@@ -101,6 +138,13 @@ namespace OOPGame
         {
             foreach (BaseObject obj in _objs)
                 obj.Update();
+            foreach (Asteroid a in _asteroids)
+            {
+                a.Update();
+                if (a.Collision(_bullet)) { System.Media.SystemSounds.Hand.Play(); }
+            }
+            _bullet.Update();
+
         }
 
         /// <summary>

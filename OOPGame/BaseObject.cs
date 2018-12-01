@@ -13,19 +13,19 @@ namespace OOPGame
     /// <summary>
     /// Класс-родитель для всех визуализируемых объектов игры
     /// </summary>
-    class BaseObject
+    abstract class BaseObject : ICollision
     {
         protected Point Pos;
         protected Point Dir;
         protected Size Size;
 
         /// <summary>
-        /// Конструктор
+        /// Конструктор базового объекта
         /// </summary>
         /// <param name="pos">Точка позиционирования</param>
         /// <param name="dir">Направление движения</param>
         /// <param name="size">Размер фигуры</param>
-        public BaseObject(Point pos, Point dir, Size size)
+        protected BaseObject(Point pos, Point dir, Size size)
         {
             Pos = pos;
             Dir = dir;
@@ -33,12 +33,9 @@ namespace OOPGame
         }
 
         /// <summary>
-        /// Добавление фигуры в буфер для дальнейшей отрисовки (обращаемся к статическому классу Game)
+        /// Добавление фигуры в буфер для дальнейшей отрисовки (абстрактный)
         /// </summary>
-        public virtual void Draw()
-        {
-            Game.Buffer.Graphics.DrawEllipse(Pens.White, Pos.X, Pos.Y, Size.Width, Size.Height);
-        }
+        public abstract void Draw();
 
         /// <summary>
         /// Перевод объекта в следующее состояние и положение
@@ -46,12 +43,24 @@ namespace OOPGame
         public virtual void Update()
         {
             Pos.X = Pos.X + Dir.X;
-            Pos.Y = Pos.Y + Dir.Y;
-            if (Pos.X < 0) Dir.X = -Dir.X;
-            if (Pos.X > Game.Width) Dir.X = -Dir.X;
-            if (Pos.Y < 0) Dir.Y = -Dir.Y;
-            if (Pos.Y > Game.Height) Dir.Y = -Dir.Y;
+            if (Pos.X < 0) Pos.X = Game.Width + Size.Width;
         }
 
+        // Так как переданный объект тоже должен будет реализовывать интерфейс ICollision, мы 
+        // можем использовать его свойство Rect и метод IntersectsWith для обнаружения пересечения с
+        // нашим объектом (а можно наоборот)
+
+        /// <summary>
+        /// Обнаружение столкновений с другими объектами
+        /// </summary>
+        /// <param name="o">Объекст, столкновение с которым проверяем</param>
+        /// <returns></returns>
+        public bool Collision(ICollision o) => o.Rect.IntersectsWith(this.Rect);
+        /// <summary>
+        /// Границы объекта
+        /// </summary>
+        public Rectangle Rect => new Rectangle(Pos, Size);
+
     }
+
 }
