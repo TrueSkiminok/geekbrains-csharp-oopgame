@@ -1,4 +1,10 @@
-﻿using System.Drawing;
+﻿/*
+Антонов Никита
+Методичка 2
+
+*/
+
+using System.Drawing;
 
 namespace OOPGame
 {

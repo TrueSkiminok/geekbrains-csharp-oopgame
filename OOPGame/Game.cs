@@ -1,6 +1,10 @@
 ﻿/*
 Антонов Никита
-Задание 
+Задание 3.  Сделать так, чтобы при столкновениях пули с астероидом
+            они регенерировались в разных концах экрана.
+Задание 4.  Сделать проверку на задание размера экрана в классе Game.
+            Если высота или ширина (Width, Height) больше 1000 или принимает
+            отрицательное значение, выбросить исключение ArgumentOutOfRangeException().
 
 */
 
@@ -46,6 +50,14 @@ namespace OOPGame
         /// <param name="form">Форма, в которой будем рисовать</param>
         public static void Init(Form form)
         {
+            if (form.Width > 1000 || form.Width < 0 || form.Height > 1000 || form.Height < 0)
+            {
+                throw new ArgumentOutOfRangeException("form.Width или form.Height",
+                "Высота или ширина больше 1000 или принимает отрицательное значение");
+            }
+
+            
+            
             // Графическое устройство для вывода графики            
             Graphics g;
             // Предоставляет доступ к главному буферу графического контекста для текущего приложения
@@ -141,7 +153,12 @@ namespace OOPGame
             foreach (Asteroid a in _asteroids)
             {
                 a.Update();
-                if (a.Collision(_bullet)) { System.Media.SystemSounds.Hand.Play(); }
+                if (a.Collision(_bullet))
+                {
+                    System.Media.SystemSounds.Hand.Play();
+                    _bullet.SetPosition(0, -1);
+                    a.SetPosition(Width, -1);
+                }
             }
             _bullet.Update();
 

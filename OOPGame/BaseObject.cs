@@ -1,6 +1,6 @@
 ﻿/*
 Антонов Никита
-Задание 
+Задание 2. Переделать виртуальный метод Update в BaseObject в абстрактный и реализовать его в наследниках.
 
 */
 
@@ -27,6 +27,18 @@ namespace OOPGame
         /// <param name="size">Размер фигуры</param>
         protected BaseObject(Point pos, Point dir, Size size)
         {
+            if (pos.X > 1000)
+                throw new GameObjectException("Координата по оси X больше 1000", GameObjectExceptionTypes.WrongCoordinates);
+            if (pos.Y > 1000)
+                throw new GameObjectException("Координата по оси Y больше 1000", GameObjectExceptionTypes.WrongCoordinates);
+            if (size.Width > 100)
+                throw new GameObjectException("Слишком широкий объект, максимальная ширина 100",
+                                              GameObjectExceptionTypes.WrongCoordinates);
+            if (size.Height > 100)
+                throw new GameObjectException("Слишком высокий объект, максимальная высота 100",
+                                              GameObjectExceptionTypes.WrongCoordinates);
+            if (dir.X > 50 || dir.Y > 50)
+                throw new GameObjectException("Слишком высокая скорость", GameObjectExceptionTypes.OverSpeed);
             Pos = pos;
             Dir = dir;
             Size = size;
@@ -38,13 +50,9 @@ namespace OOPGame
         public abstract void Draw();
 
         /// <summary>
-        /// Перевод объекта в следующее состояние и положение
+        /// Перевод объекта в следующее состояние и положение, движение (абстрактный)
         /// </summary>
-        public virtual void Update()
-        {
-            Pos.X = Pos.X + Dir.X;
-            if (Pos.X < 0) Pos.X = Game.Width + Size.Width;
-        }
+        public abstract void Update();
 
         // Так как переданный объект тоже должен будет реализовывать интерфейс ICollision, мы 
         // можем использовать его свойство Rect и метод IntersectsWith для обнаружения пересечения с
@@ -61,6 +69,15 @@ namespace OOPGame
         /// </summary>
         public Rectangle Rect => new Rectangle(Pos, Size);
 
+        /// <summary>
+        /// Установка конкретных координат объекта
+        /// </summary>
+        /// <param name="x">Координата по горизонтальной оси, если на вход подается отрицательное число, то остается прежней</param>
+        /// <param name="y">Координата по вертикальной оси, если на вход подается отрицательное число, то остается прежней</param>
+        public void SetPosition(int x, int y)
+        {
+            if (x >= 0) Pos.X = x;
+            if (y >= 0) Pos.Y = y;
+        }
     }
-
 }
