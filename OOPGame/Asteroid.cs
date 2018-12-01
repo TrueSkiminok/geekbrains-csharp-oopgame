@@ -52,5 +52,14 @@ namespace OOPGame
         {
             Game.Buffer.Graphics.FillEllipse(Brushes.White, Pos.X, Pos.Y, Size.Width, Size.Height);
         }
+
+        /// <summary>
+        /// Движение астероида
+        /// </summary>
+        public override void Update()
+        {
+            Pos.X = Pos.X + Dir.X;
+            if (Pos.X < 0) Pos.X = Game.Width + Size.Width;
+        }
     }
 }
