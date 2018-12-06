@@ -13,12 +13,12 @@ namespace OOPGame
     /// <summary>
     /// Объект - Астероид
     /// </summary>
-    class Asteroid : BaseObject, ICloneable
+    class Asteroid : BaseObject, ICloneable, IComparable<Asteroid>
     {
         /// <summary>
         /// Свойство "Сила"
         /// </summary>
-        public int Power { get; set; }
+        public int Power { get; set; } = 3;
 
         /// <summary>
         /// Конструктор объекта астероид
@@ -38,9 +38,10 @@ namespace OOPGame
         public object Clone()
         {
             // Создаем копию нашего астероида
-            Asteroid asteroid = new Asteroid(new Point(Pos.X, Pos.Y), new Point(Dir.X, Dir.Y), new Size(Size.Width, Size.Height));
-            // Не забываем скопировать новому астероиду Power нашего астероида
-            asteroid.Power = Power;
+            Asteroid asteroid = new Asteroid(new Point(Pos.X, Pos.Y),
+                                             new Point(Dir.X, Dir.Y),
+                                             new Size(Size.Width, Size.Height))
+                                             { Power = Power };
             return asteroid;
         }
 
@@ -61,5 +62,21 @@ namespace OOPGame
             Pos.X = Pos.X + Dir.X;
             if (Pos.X < 0) Pos.X = Game.Width + Size.Width;
         }
+
+        /// <summary>
+        /// Релизация интерфейса IComparable, сравнение "жизней" двух Asteroid
+        /// </summary>
+        /// <param name="obj">Астероид, с которым сравниваем</param>
+        /// <returns>1 если текущий объект больше, 0 если равны, -1 если текущий объект меньше</returns>
+        int IComparable<Asteroid>.CompareTo(Asteroid obj)
+        {
+            if (Power > obj.Power)
+                return 1;
+            if (Power < obj.Power)
+                return -1;
+            return 0;
+        }
+
+
     }
 }

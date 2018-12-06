@@ -26,6 +26,7 @@ namespace OOPGame
         public static BaseObject[] _objs;
         private static Bullet _bullet;
         private static Asteroid[] _asteroids;
+        private static Ship _ship = new Ship(new Point(10, 400), new Point(5, 5), new Size(10, 10));
 
         // Свойства
         // Ширина и высота игрового поля
@@ -56,8 +57,8 @@ namespace OOPGame
                 "Высота или ширина больше 1000 или принимает отрицательное значение");
             }
 
-            
-            
+
+
             // Графическое устройство для вывода графики            
             Graphics g;
             // Предоставляет доступ к главному буферу графического контекста для текущего приложения
@@ -72,6 +73,9 @@ namespace OOPGame
 
             // Наполняем сцену объектами
             Load();
+
+            //Подключаю обработку событий нажатия на клавишу
+            form.KeyDown += Form_KeyDown;
 
             // Вызов обработки кадра по таймеру
             Timer timer = new Timer { Interval = 100 };
@@ -136,32 +140,56 @@ namespace OOPGame
 
             foreach (BaseObject obj in _objs)
                 obj.Draw();
-            foreach (Asteroid obj in _asteroids)
-                obj.Draw();
-            _bullet.Draw();
 
+            foreach (Asteroid a in _asteroids)
+            {
+                a?.Draw();
+            }
+
+            _bullet?.Draw();
+            _ship?.Draw();
+
+            if (_ship != null)
+                Buffer.Graphics.DrawString("Energy:" + _ship.Energy, SystemFonts.DefaultFont, Brushes.White, 0, 0);
             Buffer.Render();
+
         }
 
         /// <summary>
         /// Перевод всех объектов игры к следующему положению и состоянию, в соответсвии с их внутренней логикой
+        /// Проверка на попадание объектов в друг-друга
         /// </summary>
         public static void Update()
         {
-            foreach (BaseObject obj in _objs)
-                obj.Update();
-            foreach (Asteroid a in _asteroids)
+            foreach (BaseObject obj in _objs) obj.Update();
+
+            _bullet?.Update();
+
+            for (var i = 0; i < _asteroids.Length; i++)
             {
-                a.Update();
-                if (a.Collision(_bullet))
+                if (_asteroids[i] == null) continue;
+
+                _asteroids[i].Update();
+
+                if (_bullet != null && _bullet.Collision(_asteroids[i]))
                 {
                     System.Media.SystemSounds.Hand.Play();
-                    _bullet.SetPosition(0, -1);
-                    a.SetPosition(Width, -1);
+                    _asteroids[i] = null;
+                    _bullet = null;
+                    continue;
                 }
-            }
-            _bullet.Update();
 
+                if (!_ship.Collision(_asteroids[i])) continue;
+
+                var rnd = new Random();
+                _ship?.EnergyLow(rnd.Next(1, 10));
+                System.Media.SystemSounds.Asterisk.Play();
+
+                if (_ship.Energy <= 0) _ship?.Die();
+            }
+
+            // Обработка пули, вышедшей за край экрана
+            if (_bullet != null && _bullet.OutOfZone(Width, Height)) _bullet = null;
         }
 
         /// <summary>
@@ -174,5 +202,18 @@ namespace OOPGame
             Draw();
             Update();
         }
+
+        /// <summary>
+        /// Обработчик нажатий на клавиши
+        /// </summary>
+        /// <param name="sender">источник события</param>
+        /// <param name="e">параметры события ( нажатой клавиша)</param>
+        private static void Form_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.ControlKey) _bullet = new Bullet(new Point(_ship.Rect.X + 10, _ship.Rect.Y + 4), new Point(4, 0), new Size(4, 1));
+            if (e.KeyCode == Keys.Up) _ship.Up();
+            if (e.KeyCode == Keys.Down) _ship.Down();
+        }
+
     }
 }

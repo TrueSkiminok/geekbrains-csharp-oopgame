@@ -40,5 +40,16 @@ namespace OOPGame
         {
             Pos.X = Pos.X + 3;
         }
+
+        /// <summary>
+        /// Проверка выхода за край игрового поля
+        /// </summary>
+        /// <param name="width">Ширина игрового поля</param>
+        /// <param name="height">Высота игрового поля</param>
+        /// <returns></returns>
+        public bool OutOfZone(int width, int height)
+        {
+            return (Pos.X > width || Pos.Y > height);
+        }
     }
 }

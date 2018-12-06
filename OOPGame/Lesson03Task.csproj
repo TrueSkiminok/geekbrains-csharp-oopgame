@@ -73,6 +73,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ImageObject.cs" />
+    <Compile Include="Ship.cs" />
     <Compile Include="StationaryCircle.cs" />
     <Compile Include="ThickStar.cs" />
     <Compile Include="Star.cs" />
