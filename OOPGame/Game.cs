@@ -1,15 +1,16 @@
 ﻿/*
 Антонов Никита
-Задание 3.  Сделать так, чтобы при столкновениях пули с астероидом
-            они регенерировались в разных концах экрана.
-Задание 4.  Сделать проверку на задание размера экрана в классе Game.
-            Если высота или ширина (Width, Height) больше 1000 или принимает
-            отрицательное значение, выбросить исключение ArgumentOutOfRangeException().
+Задание 2. Добработать игру «Астероиды».
+        а) Добавить ведение журнала в консоль с помощью делегатов;
+        б) *Добавить это и в файл.
+Задание 3. Разработать аптечки, которые добавляют энергию.
+Задание 4. Добавить подсчет очков за сбитые астероиды.
 
 */
 
 using System;
 using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
 
 
@@ -27,6 +28,13 @@ namespace OOPGame
         private static Bullet _bullet;
         private static Asteroid[] _asteroids;
         private static Ship _ship = new Ship(new Point(10, 400), new Point(5, 5), new Size(10, 10));
+        private static Medkit _medkit; //добавляем аптечку, не более 1 в каждый момент времени
+        private static Random rnd = new Random(); // вынес рандомайзер на уровень класса, чтобы он был доступен во всех методах
+        private static Action<string> log; // Обобщенный делегат типа "действие" для вызова логирования
+        private static int score; //Текущий счет
+
+
+
 
         // Свойства
         // Ширина и высота игрового поля
@@ -44,6 +52,8 @@ namespace OOPGame
         /// </summary>
         static Game()
         {
+            log += WriteLogEntryToConsole; // подключаем вывод лога в консоль
+            log += WriteLogEntryToFile; // подключаем вывод лога в файл
         }
         /// <summary>
         /// Инициализация вывода графики в форму
@@ -83,18 +93,16 @@ namespace OOPGame
             timer.Tick += Timer_Tick;
         }
 
-
         /// <summary>
         /// Создание набора элементов, которые мы хотим отрисовать
         /// </summary>
         public static void Load()
         {
 
-
             _objs = new BaseObject[30];
-            _bullet = new Bullet(new Point(0, 200), new Point(5, 0), new Size(4, 1));
+            // Автоматическая генерация пули больше не нужна, корабль умеет стрелять.
+            //_bullet = new Bullet(new Point(0, 200), new Point(5, 0), new Size(4, 1));
             _asteroids = new Asteroid[3];
-            var rnd = new Random();
             for (var i = 0; i < _objs.Length; i++)
             {
                 int r = rnd.Next(5, 50);
@@ -102,10 +110,9 @@ namespace OOPGame
             }
             for (var i = 0; i < _asteroids.Length; i++)
             {
-                int r = rnd.Next(5, 50);
-                _asteroids[i] = new Asteroid(new Point(1000, rnd.Next(0, Game.Height)), new Point(-r / 5, r), new Size(r, r));
+                _asteroids[i] = NewAsteroid();
             }
-
+            _medkit = NewMedkit();
 
             ////Мы решили создать 30 объектов на экране
             //_objs = new BaseObject[30];
@@ -147,10 +154,14 @@ namespace OOPGame
             }
 
             _bullet?.Draw();
+            _medkit?.Draw();
             _ship?.Draw();
 
             if (_ship != null)
-                Buffer.Graphics.DrawString("Energy:" + _ship.Energy, SystemFonts.DefaultFont, Brushes.White, 0, 0);
+                Buffer.Graphics.DrawString("Energy: " + _ship.Energy, SystemFonts.DefaultFont, Brushes.White, 0, 0);
+            // Отрисовка счета
+            Buffer.Graphics.DrawString("Score: " + score, SystemFonts.DefaultFont, Brushes.Aquamarine, 0, 15);
+
             Buffer.Render();
 
         }
@@ -164,6 +175,14 @@ namespace OOPGame
             foreach (BaseObject obj in _objs) obj.Update();
 
             _bullet?.Update();
+            _medkit?.Update();
+
+            if (_ship.Collision(_medkit))
+            {
+                log?.Invoke($"Найдена аптечка. Энергия корабля будет восстановлена на {_medkit.Power} единиц");
+                _ship.Heal(_medkit.Power);
+                _medkit = NewMedkit();
+            }
 
             for (var i = 0; i < _asteroids.Length; i++)
             {
@@ -174,7 +193,9 @@ namespace OOPGame
                 if (_bullet != null && _bullet.Collision(_asteroids[i]))
                 {
                     System.Media.SystemSounds.Hand.Play();
-                    _asteroids[i] = null;
+                    log?.Invoke($"Пуля попала в астероид, астероид уничтожен, вы заработали {_asteroids[i].Power} очков");
+                    score += _asteroids[i].Power;
+                    _asteroids[i] = NewAsteroid();
                     _bullet = null;
                     continue;
                 }
@@ -182,10 +203,17 @@ namespace OOPGame
                 if (!_ship.Collision(_asteroids[i])) continue;
 
                 var rnd = new Random();
-                _ship?.EnergyLow(rnd.Next(1, 10));
+                int damage = rnd.Next(1, 10);
+                _ship?.EnergyLow(damage);
                 System.Media.SystemSounds.Asterisk.Play();
+                log?.Invoke($"Корабль столкнулся с Астероидом и получил {damage} урона.");
 
-                if (_ship.Energy <= 0) _ship?.Die();
+                if (_ship.Energy <= 0)
+                {
+                    _ship?.Die();
+                    log?.Invoke($"Корабль уничтожен");
+                    // Вероятно тут нужно будет добавить конец игры
+                }
             }
 
             // Обработка пули, вышедшей за край экрана
@@ -210,10 +238,55 @@ namespace OOPGame
         /// <param name="e">параметры события ( нажатой клавиша)</param>
         private static void Form_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.ControlKey) _bullet = new Bullet(new Point(_ship.Rect.X + 10, _ship.Rect.Y + 4), new Point(4, 0), new Size(4, 1));
+            if (e.KeyCode == Keys.ControlKey)
+            {
+                _bullet = new Bullet(new Point(_ship.Rect.X + 10, _ship.Rect.Y + 4), new Point(4, 0), new Size(4, 1));
+                log?.Invoke($"Произведен выстрел по линии Y = {_ship.Rect.Y + 4}");
+            }
             if (e.KeyCode == Keys.Up) _ship.Up();
             if (e.KeyCode == Keys.Down) _ship.Down();
         }
 
+        /// <summary>
+        /// Вывод сообщения в консоль
+        /// </summary>
+        /// <param name="_message">тело сообщения</param>
+        private static void WriteLogEntryToConsole(string _message)
+        {
+            string message = $"{DateTime.Now.ToLongTimeString()} >>> {_message}";
+            Console.WriteLine(message);
+        }
+
+        /// <summary>
+        /// /// Вывод сообщения в файл
+        /// </summary>
+        /// <param name="_message">тело сообщения</param>
+        private static void WriteLogEntryToFile(string _message)
+        {
+            string message = $"{DateTime.Now.ToLongTimeString()} >>> {_message}";
+            using (var r = new StreamWriter($"Asteroids_log.txt", true))
+            {
+                r.WriteLine(message);
+            }
+        }
+
+        /// <summary>
+        /// Создание новой аптечки на рандомной линии
+        /// </summary>
+        /// <returns>Объект аптечка типа Medkit</returns>
+        private static Medkit NewMedkit()
+        {
+            return new Medkit(new Point(800, rnd.Next(0, Game.Height)), new Point(-5, 0), new Size(20, 20), 10);
+        }
+
+        /// <summary>
+        /// Создание нового Астероида на рандомной линии
+        /// </summary>
+        /// <returns>Объект астероид типа Asteroid</returns>
+        private static Asteroid NewAsteroid()
+        {
+            int r = rnd.Next(5, 50);
+            return new Asteroid(new Point(1000, rnd.Next(0, Game.Height)), new Point(-r / 5, r), new Size(r, r));
+        }
     }
 }

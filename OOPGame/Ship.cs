@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Drawing;
 
 namespace OOPGame
 {
@@ -68,6 +69,12 @@ namespace OOPGame
         /// </summary>
         public void Die()
         {
+        }
+
+        internal void Heal(int power)
+        {
+            if (Energy + power < 100) Energy += power;
+            else Energy = 100;
         }
     }
 
