@@ -96,11 +96,14 @@ namespace OOPGame
         {
 
             _objs = new BaseObject[30];
-            for (var i = 0; i < _objs.Length; i++)
+            for (var i = 0; i < _objs.Length-1; i++)
             {
                 int r = rnd.Next(5, 50);
                 _objs[i] = new Star(new Point(1000, rnd.Next(0, Game.Height)), new Point(-r, r), new Size(3, 3));
             }
+            _objs[_objs.Length-1] = new ImageObject(    new Point(rnd.Next(0, Width), rnd.Next(0, Height)),
+                                                        new Point(-_objs.Length + 10, _objs.Length - 10),
+                                                        new Size(30, 30), Image.FromFile(@"img\comet.png"));
 
             _asteroids = NewAsteroids(difficulty);
             _medkit = NewMedkit();
