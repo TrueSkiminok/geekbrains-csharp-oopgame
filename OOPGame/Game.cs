@@ -24,12 +24,15 @@ namespace OOPGame
         public static BufferedGraphics Buffer;
         public static BaseObject[] _objs;
         private static List<Bullet> _bullets = new List<Bullet>();
-        private static Asteroid[] _asteroids;
-        private static Ship _ship = new Ship(new Point(10, 400), new Point(5, 5), new Size(10, 10));
+        private static int difficulty = 3; // Начальная сложность
+        private static List<Asteroid> _asteroids;
+        private static Ship _ship = new Ship(new Point(10, 400), new Point(5, 5), new Size(15, 11));
         private static Medkit _medkit; //добавляем аптечку, не более 1 в каждый момент времени
         private static Random rnd = new Random(); // вынес рандомайзер на уровень класса, чтобы он был доступен во всех методах
         private static Action<string> log; // Обобщенный делегат типа "действие" для вызова логирования
-        private static int score; //Текущий счет
+        private static int score = 0; //Текущий счет
+        private static int level = 1; //Текущий уровень
+        private static Timer timer;
 
         // Свойства
         // Ширина и высота игрового поля
@@ -62,8 +65,6 @@ namespace OOPGame
                 "Высота или ширина больше 1000 или принимает отрицательное значение");
             }
 
-
-
             // Графическое устройство для вывода графики            
             Graphics g;
             // Предоставляет доступ к главному буферу графического контекста для текущего приложения
@@ -83,7 +84,7 @@ namespace OOPGame
             form.KeyDown += Form_KeyDown;
 
             // Вызов обработки кадра по таймеру
-            Timer timer = new Timer { Interval = 100 };
+            timer = new Timer { Interval = 100 };
             timer.Start();
             timer.Tick += Timer_Tick;
         }
@@ -95,18 +96,13 @@ namespace OOPGame
         {
 
             _objs = new BaseObject[30];
-            // Автоматическая генерация пули больше не нужна, корабль умеет стрелять.
-            //_bullet = new Bullet(new Point(0, 200), new Point(5, 0), new Size(4, 1));
-            _asteroids = new Asteroid[3];
             for (var i = 0; i < _objs.Length; i++)
             {
                 int r = rnd.Next(5, 50);
                 _objs[i] = new Star(new Point(1000, rnd.Next(0, Game.Height)), new Point(-r, r), new Size(3, 3));
             }
-            for (var i = 0; i < _asteroids.Length; i++)
-            {
-                _asteroids[i] = NewAsteroid();
-            }
+
+            _asteroids = NewAsteroids(difficulty);
             _medkit = NewMedkit();
 
             ////Мы решили создать 30 объектов на экране
@@ -160,6 +156,8 @@ namespace OOPGame
                 Buffer.Graphics.DrawString("Energy: " + _ship.Energy, SystemFonts.DefaultFont, Brushes.White, 0, 0);
             // Отрисовка счета
             Buffer.Graphics.DrawString("Score: " + score, SystemFonts.DefaultFont, Brushes.Aquamarine, 0, 15);
+            // Отрисовка уровня
+            Buffer.Graphics.DrawString("LEVEL: " + level, SystemFonts.DefaultFont, Brushes.Gold, (Width / 2) - 7, 2);
 
             Buffer.Render();
 
@@ -190,7 +188,7 @@ namespace OOPGame
                 _medkit = NewMedkit();
             }
 
-            for (var i = 0; i < _asteroids.Length; i++)
+            for (var i = 0; i < _asteroids.Count; i++)
             {
                 if (_asteroids[i] == null) continue;
                 _asteroids[i].Update();
@@ -207,16 +205,23 @@ namespace OOPGame
 
                 if (_asteroids[i] == null || !_ship.Collision(_asteroids[i])) continue;
 
-                int damage = rnd.Next(1, 10);
-                _ship.EnergyLow(damage);
+                _ship.EnergyLow(_asteroids[i].Power);
                 System.Media.SystemSounds.Asterisk.Play();
-                log?.Invoke($"Корабль столкнулся с Астероидом и получил {damage} урона.");
+                log?.Invoke($"Корабль столкнулся с Астероидом и получил {_asteroids[i].Power} урона.");
                 if (_ship.Energy <= 0)
                 {
                     _ship?.Die();
-                    log?.Invoke($"Корабль уничтожен");
+                    log?.Invoke($"Корабль уничтожен, конец игры. Уровень: {level}, суммарно очков набрано: {score}");
                     // Вероятно тут нужно будет добавить конец игры
+                    timer.Stop();
+                    DrawEndOfGame();
                 }
+            }
+            _asteroids.RemoveAll(a => a == null);
+            if (_asteroids.Count == 0)
+            {
+                _asteroids = NewAsteroids(++difficulty);
+                level++;
             }
         }
 
@@ -240,8 +245,8 @@ namespace OOPGame
         {
             if (e.KeyCode == Keys.ControlKey)
             {
-                _bullets.Add(new Bullet(new Point(_ship.Rect.X + 10, _ship.Rect.Y + 4), new Point(10, 0), new Size(4, 1)));
-                log?.Invoke($"Произведен выстрел по линии Y = {_ship.Rect.Y + 4}");
+                _bullets.Add(new Bullet(new Point(_ship.Rect.X + 15, _ship.Rect.Y + 5), new Point(10, 0), new Size(4, 1)));
+                //log?.Invoke($"Произведен выстрел по линии Y = {_ship.Rect.Y + 4}");
             }
             if (e.KeyCode == Keys.Up) _ship.Up();
             if (e.KeyCode == Keys.Down) _ship.Down();
@@ -285,8 +290,42 @@ namespace OOPGame
         /// <returns>Объект астероид типа Asteroid</returns>
         private static Asteroid NewAsteroid()
         {
-            int r = rnd.Next(5, 50);
-            return new Asteroid(new Point(1000, rnd.Next(0, Game.Height)), new Point(-r / 5, r), new Size(r, r));
+            int r = rnd.Next(10, 50);
+            return new Asteroid(new Point(1000, rnd.Next(5, Game.Height - 5)), new Point(-r / 5, r), new Size(r, r), rnd.Next(1, 10));
+        }
+
+        /// <summary>
+        /// Создание списка астероидов
+        /// </summary>
+        /// <param name="n">Требуемое количество астероидов</param>
+        /// <returns>Список астероидов</returns>
+        private static List<Asteroid> NewAsteroids(int n)
+        {
+            _asteroids = new List<Asteroid>();
+            for (var i = 0; i < n; i++)
+            {
+                _asteroids.Add(NewAsteroid());
+            }
+            return _asteroids;
+        }
+        
+        /// <summary>
+        /// Игра закончена, отрисовка результатов
+        /// </summary>
+        public static void DrawEndOfGame()
+        {
+            Buffer.Graphics.Clear(Color.Black);
+
+            // Конец игры
+            Font drawFont = new Font("Arial", 16);
+            Buffer.Graphics.DrawString("КОНЕЦ ИГРЫ", drawFont, Brushes.White, (Width / 2) - 60, (Height / 2) - 60);
+            // Отрисовка уровня
+            Buffer.Graphics.DrawString("LEVEL: " + level, SystemFonts.DefaultFont, Brushes.Gold, (Width / 2) - 20, (Height / 2) - 30);
+            // Отрисовка счета
+            Buffer.Graphics.DrawString("Score: " + score, SystemFonts.DefaultFont, Brushes.Aquamarine, (Width / 2) - 20, (Height / 2) - 10);
+
+            Buffer.Render();
+
         }
     }
 }

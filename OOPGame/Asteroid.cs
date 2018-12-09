@@ -18,7 +18,7 @@ namespace OOPGame
         /// <summary>
         /// Свойство "Сила"
         /// </summary>
-        public int Power { get; set; } = 3;
+        public int Power { get; set; }
 
         /// <summary>
         /// Конструктор объекта астероид
@@ -26,9 +26,9 @@ namespace OOPGame
         /// <param name="pos">Точка позиционирования</param>
         /// <param name="dir">Направление движения</param>
         /// <param name="size">Размер фигуры</param>
-        public Asteroid(Point pos, Point dir, Size size) : base(pos, dir, size)
+        public Asteroid(Point pos, Point dir, Size size, int power) : base(pos, dir, size)
         {
-            Power = 1;
+            Power = power;
         }
 
         /// <summary>
@@ -40,8 +40,8 @@ namespace OOPGame
             // Создаем копию нашего астероида
             Asteroid asteroid = new Asteroid(new Point(Pos.X, Pos.Y),
                                              new Point(Dir.X, Dir.Y),
-                                             new Size(Size.Width, Size.Height))
-                                             { Power = Power };
+                                             new Size(Size.Width, Size.Height), Power);
+                                             
             return asteroid;
         }
 
