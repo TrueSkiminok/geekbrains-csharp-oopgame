@@ -1,14 +1,12 @@
 ﻿/*
 Антонов Никита
-Задание 2. Добработать игру «Астероиды».
-        а) Добавить ведение журнала в консоль с помощью делегатов;
-        б) *Добавить это и в файл.
-Задание 3. Разработать аптечки, которые добавляют энергию.
-Задание 4. Добавить подсчет очков за сбитые астероиды.
+Задание 1. Добавить в программу коллекцию астероидов. Как только она заканчивается (все астероиды сбиты),
+формируется новая коллекция, в которой на 1 астероид больше.
 
 */
 
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
@@ -25,16 +23,13 @@ namespace OOPGame
         private static BufferedGraphicsContext _context;
         public static BufferedGraphics Buffer;
         public static BaseObject[] _objs;
-        private static Bullet _bullet;
+        private static List<Bullet> _bullets = new List<Bullet>();
         private static Asteroid[] _asteroids;
         private static Ship _ship = new Ship(new Point(10, 400), new Point(5, 5), new Size(10, 10));
         private static Medkit _medkit; //добавляем аптечку, не более 1 в каждый момент времени
         private static Random rnd = new Random(); // вынес рандомайзер на уровень класса, чтобы он был доступен во всех методах
         private static Action<string> log; // Обобщенный делегат типа "действие" для вызова логирования
         private static int score; //Текущий счет
-
-
-
 
         // Свойства
         // Ширина и высота игрового поля
@@ -153,7 +148,11 @@ namespace OOPGame
                 a?.Draw();
             }
 
-            _bullet?.Draw();
+            foreach (Bullet b in _bullets)
+            {
+                b.Draw();
+            }
+
             _medkit?.Draw();
             _ship?.Draw();
 
@@ -173,8 +172,15 @@ namespace OOPGame
         public static void Update()
         {
             foreach (BaseObject obj in _objs) obj.Update();
-
-            _bullet?.Update();
+            for (int i = 0; i < _bullets.Count; i++)
+            {
+                if (_bullets[i].OutOfZone(Width, Height))
+                {
+                    _bullets.RemoveAt(i);
+                    i--;
+                }
+            }
+            foreach (Bullet b in _bullets) b.Update();
             _medkit?.Update();
 
             if (_ship.Collision(_medkit))
@@ -187,27 +193,24 @@ namespace OOPGame
             for (var i = 0; i < _asteroids.Length; i++)
             {
                 if (_asteroids[i] == null) continue;
-
                 _asteroids[i].Update();
+                for (int j = 0; j < _bullets.Count; j++)
+                    if (_asteroids[i] != null && _bullets[j].Collision(_asteroids[i]))
+                    {
+                        System.Media.SystemSounds.Hand.Play();
+                        log?.Invoke($"Пуля попала в астероид, астероид уничтожен, вы заработали {_asteroids[i].Power} очков");
+                        score += _asteroids[i].Power;
+                        _asteroids[i] = null;
+                        _bullets.RemoveAt(j);
+                        j--;
+                    }
 
-                if (_bullet != null && _bullet.Collision(_asteroids[i]))
-                {
-                    System.Media.SystemSounds.Hand.Play();
-                    log?.Invoke($"Пуля попала в астероид, астероид уничтожен, вы заработали {_asteroids[i].Power} очков");
-                    score += _asteroids[i].Power;
-                    _asteroids[i] = NewAsteroid();
-                    _bullet = null;
-                    continue;
-                }
+                if (_asteroids[i] == null || !_ship.Collision(_asteroids[i])) continue;
 
-                if (!_ship.Collision(_asteroids[i])) continue;
-
-                var rnd = new Random();
                 int damage = rnd.Next(1, 10);
-                _ship?.EnergyLow(damage);
+                _ship.EnergyLow(damage);
                 System.Media.SystemSounds.Asterisk.Play();
                 log?.Invoke($"Корабль столкнулся с Астероидом и получил {damage} урона.");
-
                 if (_ship.Energy <= 0)
                 {
                     _ship?.Die();
@@ -215,9 +218,6 @@ namespace OOPGame
                     // Вероятно тут нужно будет добавить конец игры
                 }
             }
-
-            // Обработка пули, вышедшей за край экрана
-            if (_bullet != null && _bullet.OutOfZone(Width, Height)) _bullet = null;
         }
 
         /// <summary>
@@ -240,7 +240,7 @@ namespace OOPGame
         {
             if (e.KeyCode == Keys.ControlKey)
             {
-                _bullet = new Bullet(new Point(_ship.Rect.X + 10, _ship.Rect.Y + 4), new Point(4, 0), new Size(4, 1));
+                _bullets.Add(new Bullet(new Point(_ship.Rect.X + 10, _ship.Rect.Y + 4), new Point(10, 0), new Size(4, 1)));
                 log?.Invoke($"Произведен выстрел по линии Y = {_ship.Rect.Y + 4}");
             }
             if (e.KeyCode == Keys.Up) _ship.Up();
