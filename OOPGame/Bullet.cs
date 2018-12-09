@@ -38,7 +38,7 @@ namespace OOPGame
         /// </summary>
         public override void Update()
         {
-            Pos.X = Pos.X + 3;
+            Pos.X = Pos.X + Dir.X;
         }
 
         /// <summary>

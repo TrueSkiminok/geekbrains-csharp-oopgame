@@ -1,5 +1,4 @@
-﻿using System;
-using System.Drawing;
+﻿using System.Drawing;
 
 namespace OOPGame
 {
@@ -71,6 +70,10 @@ namespace OOPGame
         {
         }
 
+        /// <summary>
+        /// Восстановление энергии корабля
+        /// </summary>
+        /// <param name="power">количество восстанавливаемой энергии </param>
         internal void Heal(int power)
         {
             if (Energy + power < 100) Energy += power;
