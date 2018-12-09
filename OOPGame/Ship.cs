@@ -37,9 +37,12 @@ namespace OOPGame
         /// </summary>
         public override void Draw()
         {
-            Game.Buffer.Graphics.FillEllipse(Brushes.Orange, Pos.X, Pos.Y, Size.Width, Size.Height);
+            //Game.Buffer.Graphics.FillEllipse(Brushes.Orange, Pos.X, Pos.Y, Size.Width, Size.Height);
+            Game.Buffer.Graphics.FillPolygon(   Brushes.Orange,
+                                                new Point[] {   new Point(Pos.X, Pos.Y),
+                                                                new Point(Pos.X, Pos.Y + Size.Height),
+                                                                new Point(Pos.X + Size.Width, Pos.Y + (Size.Height / 2) )});
         }
-
         /// <summary>
         /// Движение корабля
         /// </summary>
