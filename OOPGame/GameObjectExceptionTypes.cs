@@ -9,10 +9,13 @@
 
 namespace OOPGame
 {
+    /// <summary>
+    /// Перечисление типов исключения GameObjectException
+    /// </summary>
     enum GameObjectExceptionTypes
     {
-        NegativeSize,
-        OverSpeed,
-        WrongCoordinates
+        NegativeSize, // Отрицательный размер
+        OverSpeed, // Слишком большая скорость
+        WrongCoordinates // Выход за границы возможных координат
     }
 }

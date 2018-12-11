@@ -11,9 +11,21 @@ using System;
 
 namespace OOPGame
 {
+    /// <summary>
+    /// Собственное исключение для игры
+    /// </summary>
     class GameObjectException : Exception
     {
+        /// <summary>
+        /// Свойство - типа перечисление видов исключений
+        /// </summary>
         public GameObjectExceptionTypes ErrorType;
+
+        /// <summary>
+        /// Конструктор собственного исключения для игры
+        /// </summary>
+        /// <param name="msg">Сообщение</param>
+        /// <param name="errorType">Тип исключения из перечисления GameObjectExceptionTypes</param>
         public GameObjectException(string msg, GameObjectExceptionTypes errorType) : base(msg)
         {
             ErrorType = errorType;

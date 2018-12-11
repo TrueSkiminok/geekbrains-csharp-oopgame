@@ -20,18 +20,57 @@ namespace OOPGame
     /// </summary>
     static class Game
     {
+        /// <summary>
+        /// Графический контекст
+        /// </summary>
         private static BufferedGraphicsContext _context;
+        /// <summary>
+        /// Графический буфер
+        /// </summary>
         public static BufferedGraphics Buffer;
+        /// <summary>
+        /// Список фоновых объектов для отрисовки
+        /// </summary>
         public static BaseObject[] _objs;
+        /// <summary>
+        /// Список пуль
+        /// </summary>
         private static List<Bullet> _bullets = new List<Bullet>();
+        /// <summary>
+        /// Сложность игры
+        /// </summary>
         private static int difficulty = 3; // Начальная сложность
+        /// <summary>
+        /// Список астероидов - целей
+        /// </summary>
         private static List<Asteroid> _asteroids;
+        /// <summary>
+        /// Корабль игрока
+        /// </summary>
         private static Ship _ship = new Ship(new Point(10, 400), new Point(5, 5), new Size(15, 11));
+        /// <summary>
+        /// Аптечка
+        /// </summary>
         private static Medkit _medkit; //добавляем аптечку, не более 1 в каждый момент времени
+        /// <summary>
+        /// Рандомизатор
+        /// </summary>
         private static Random rnd = new Random(); // вынес рандомайзер на уровень класса, чтобы он был доступен во всех методах
+        /// <summary>
+        /// Обобщенный делегат типа "действие" для вызова логирования
+        /// </summary>
         private static Action<string> log; // Обобщенный делегат типа "действие" для вызова логирования
+        /// <summary>
+        /// Текущий игровой счет
+        /// </summary>
         private static int score = 0; //Текущий счет
+        /// <summary>
+        /// Теущий уровень игры
+        /// </summary>
         private static int level = 1; //Текущий уровень
+        /// <summary>
+        /// Таймер для покадровой обработки игры
+        /// </summary>
         private static Timer timer;
 
         // Свойства
